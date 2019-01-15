@@ -46,7 +46,7 @@ pub struct CopaConfig {
 
 impl<T: Ipc> Copa<T> {
     fn compute_rate(&self) -> u32 {
-        (2 * self.cwnd as u64 * 1_000_000 / self.rtt_win.get_base_rtt() as u64) as u32
+        (self.cwnd as u64 * 1_000_000 / self.rtt_win.get_base_rtt() as u64) as u32
     }
 
     fn update(&self) {
