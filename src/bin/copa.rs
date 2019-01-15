@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate clap;
 use clap::Arg;
 
@@ -11,6 +12,23 @@ extern crate ccp_copa;
 use ccp_copa::CopaConfig;
 
 extern crate portus;
+
+arg_enum! {
+#[derive(Clone)]
+enum DeltaModeArg {
+    NoTCP,
+    Auto,
+}
+}
+
+impl Into<ccp_copa::DeltaModeConf> for DeltaModeArg {
+    fn into(self) -> ccp_copa::DeltaModeConf {
+        match self {
+            DeltaModeArg::NoTCP => ccp_copa::DeltaModeConf::NoTCP,
+            DeltaModeArg::Auto => ccp_copa::DeltaModeConf::Auto,
+        }
+    }
+}
 
 fn make_logger() -> slog::Logger {
     let decorator = slog_term::TermDecorator::new().build();
@@ -37,6 +55,11 @@ fn make_args(log: slog::Logger) -> Result<(CopaConfig, String), std::num::ParseI
              .long("default_delta")
              .help("Delta to use when in default mode.")
              .default_value("0.5"))
+        .arg(Arg::with_name("delta_mode")
+             .long("delta_mode")
+             .help("Delta mode to use. NoTcp for guaranteed no cross traffic TCP flows.")
+             .possible_values(&DeltaModeArg::variants())
+             .default_value("Auto"))
         .get_matches();
 
     Ok((
@@ -46,7 +69,9 @@ fn make_args(log: slog::Logger) -> Result<(CopaConfig, String), std::num::ParseI
             default_delta: (matches.value_of("default_delta").unwrap())
                 .parse()
                 .unwrap(),
-            delta_mode: ccp_copa::DeltaModeConf::Auto,
+            delta_mode: value_t!(matches, "delta_mode", DeltaModeArg)
+                .unwrap()
+                .into(),
         },
         String::from(matches.value_of("ipc").unwrap()),
     ))
