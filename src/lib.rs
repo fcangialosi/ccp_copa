@@ -200,6 +200,10 @@ impl<T: Ipc> CongAlg<T> for CopaConfig {
             (when (> Micros (/ basertt 2))
                 (:= Micros 0)
                 (report)
+            )
+            (when (== basertt +infinity)
+                (:= Micros 0)
+                (report)
             )"
             .to_string(),
         )]
