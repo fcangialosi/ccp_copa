@@ -92,6 +92,9 @@ impl<T: Ipc> Copa<T> {
             {
                 if (now - self.time_since_direction) as u32 > 3 * rtt {
                     self.velocity *= 2;
+                    if self.velocity > 16 {
+                        self.velocity = 16;
+                    }
                 } else {
                     assert!(self.velocity == 1);
                 }
