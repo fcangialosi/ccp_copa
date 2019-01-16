@@ -259,7 +259,7 @@ impl<T: Ipc> portus::Flow for Copa<T> {
             self.rtt_win.new_rtt_sample(min_rtt, now);
             if self.rtt_win.did_base_rtt_change() {
                 self.control_channel
-                    .update_field(&self.sc, &[("base_rtt", self.rtt_win.get_base_rtt())])
+                    .update_field(&self.sc, &[("basertt", self.rtt_win.get_base_rtt())])
                     .unwrap();
             }
             // Update delta mode and delta
