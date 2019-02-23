@@ -1,14 +1,14 @@
 extern crate clap;
-extern crate fnv;
-use fnv::FnvHashMap;
+use std::collections::HashMap;
 
 #[macro_use]
 extern crate slog;
 extern crate portus;
+extern crate portus_export;
 
 use portus::ipc::Ipc;
 use portus::lang::Scope;
-use portus::{CongAlg, Datapath, DatapathInfo, DatapathTrait, Report};
+use portus::{CongAlg, ForCLI, Datapath, DatapathInfo, DatapathTrait, Report};
 
 mod delta_manager;
 mod rtt_window;
@@ -17,6 +17,8 @@ use delta_manager::{DeltaManager, DeltaMode};
 use rtt_window::RTTWindow;
 mod agg_measurement;
 use agg_measurement::{AggMeasurement, ReportStatus};
+
+use portus_export::for_cli;
 
 pub struct Copa<T: Ipc> {
     control_channel: Datapath<T>,
@@ -36,6 +38,8 @@ pub struct Copa<T: Ipc> {
     agg_measurement: AggMeasurement,
 }
 
+#[for_cli]
+#[derive(Default)]
 #[derive(Clone)]
 pub struct CopaConfig {
     pub logger: Option<slog::Logger>,
@@ -43,6 +47,37 @@ pub struct CopaConfig {
     pub default_delta: f32,
     pub delta_mode: DeltaModeConf,
 }
+
+use clap::Arg;
+impl<'a,'b> ForCLI<'a,'b> for CopaConfig {
+    fn register() -> (String, clap::App<'a,'b>) {
+        let app = clap::App::new("CCP Copa")
+            .version("0.2.1")
+            .author("CCP Project <ccp@csail.mit.edu>")
+            .about("Implementation of BBR Congestion Control")
+            .arg(Arg::with_name("ipc")
+                 .long("ipc")
+                 .help("Sets the type of ipc to use: (netlink|unix)")
+                 .default_value("unix")
+                 .validator(portus::algs::ipc_valid))
+            .arg(Arg::with_name("probe_rtt_interval")
+                 .long("probe_rtt_interval")
+                 .help("Sets the BBR probe RTT interval in seconds, after which BBR drops its congestion window to potentially observe a new minimum RTT.")
+                 .default_value("10"))
+            .arg(Arg::with_name("verbose")
+                 .short("v")
+                 .help("If provided, log internal BBR state"));
+        (String::from("copa"), app)
+    }
+    fn from_args(_args: &clap::ArgMatches, _log: Option<slog::Logger>) -> Result<Self, portus::Error> {
+        Ok(
+            Self {
+                ..Default::default()
+            }
+        )
+    }
+}
+
 
 impl<T: Ipc> Copa<T> {
     fn compute_rate(&self) -> u32 {
@@ -165,7 +200,7 @@ impl<T: Ipc> CongAlg<T> for CopaConfig {
         "copa"
     }
 
-    fn datapath_programs(&self) -> FnvHashMap<&'static str, String> {
+    fn datapath_programs(&self) -> HashMap<&'static str, String> {
         vec![(
             "copa",
             "(def

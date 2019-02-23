@@ -6,6 +6,10 @@ pub enum DeltaModeConf {
     Auto,
 }
 
+impl Default for DeltaModeConf {
+    fn default() -> Self { DeltaModeConf::Auto }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DeltaMode {
     Default,
