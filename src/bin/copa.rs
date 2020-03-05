@@ -90,5 +90,6 @@ fn main() {
           "delta_mode" => ?cfg.delta_mode,
     );
 
+    //portus::start!(ipc.as_str(), Some(log), cfg, portus::ipc::Blocking, 1).unwrap()
     portus::start!(ipc.as_str(), Some(log), cfg).unwrap()
 }

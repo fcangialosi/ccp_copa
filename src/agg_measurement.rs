@@ -86,8 +86,11 @@ impl AggMeasurement {
                 (1. - self.srtt_alpha) * self.srtt;
         }
 
-        if now > 0 && self.last_report_time <
-            now - (self.srtt * self.reporting_interval) as u64 {
+        eprintln!("now={}, srtt={} interval={}", now, self.srtt, self.reporting_interval);
+
+
+        if now > 0 && (self.srtt as u64 > now || (self.last_report_time <
+            now - (self.srtt * self.reporting_interval) as u64)) {
                 let res = (ReportStatus::Report, false, self.acked, self.sacked,
                            loss, inflight, self.rtt, self.min_rtt, now);
                 self.last_report_time = now;
